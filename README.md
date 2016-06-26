@@ -1,6 +1,11 @@
 # cli4s
 CLI utilities for Scala
 
+# Status
+Build status on Travis CI:
+
+https://travis-ci.org/efekahraman/cli4s.svg?branch=master
+
 # Dependency
 
 ```scala
