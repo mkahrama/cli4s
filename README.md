@@ -1,24 +1,24 @@
 # cli4s
 CLI utilities for Scala
 
-# Status
+## Status
 Build status on Travis CI:
 
 [![Build Status](https://travis-ci.org/efekahraman/cli4s.svg?branch=master)](https://travis-ci.org/efekahraman/cli4s)
 
 
-# Dependency
+## Dependency
 
 ```scala
 libraryDependencies += "cli4s" %% "cli4s" % "1.0.0"
 ```
 
-# Components
+## Components
 
-## GetOpt
+### GetOpt
 POSIX compliant get-opt utility to parse command-line options. For more information see [GNU getopt page](https://www.gnu.org/software/libc/manual/html_node/Argument-Syntax.html).
 
-### Sample Usage
+#### Sample Usage
 
 ```scala
 import cli4s.getopt._
@@ -28,16 +28,12 @@ def parser(token: Token): Unit = token match {
        case ShortOption('v') => // Process option... Usable values: token.index, token.value
        case ShortOption('s') => // Process option... Usable values: token.index
        case Argument("arg1") => // Process argument... Usable values: token.index
-       case _ => println("unknown option:")
+       case _ => println("unknown option")
      }
 
     val optList = List(TokenItem(ShortOption('s'), false), // Takes no value
                        TokenItem(ShortOption('v'), true, Option(0)), // Takes value, and must be first option if present
                        TokenItem(LongOption("long-option"), true)) // Takes value
 
-    new GetOpt(args, optList).iterate(parser)
+    new GetOpt("-v test -s --long-option=test", optList).iterate(parser)
 ```
-
-### Restrictions
-* Whitespace separating is not supported (option and value should given together)
-* The argument ‘--’ has no effect for the rest of the options.
