@@ -25,21 +25,21 @@ class GetOptErrorSpec extends FlatSpec {
   "GetOpt" should "give an error when undefined option is passed" in {
     val items = List(TokenItem(ShortOption('s'), false))
     intercept[InvalidOptionException] {
-      new GetOpt(Array("-s", "-x"), items).iterate(emptyCallback)
+      new GetOpt("-s -x", items).iterate(emptyCallback)
     }
   }
 
   it should "give an error when value not present" in {
     val items = List(TokenItem(ShortOption('s'), true))
     intercept[InvalidOptionException] {
-      new GetOpt(Array("-s"), items).iterate(emptyCallback)
+      new GetOpt("-s", items).iterate(emptyCallback)
     }
   }
 
   it should "give an error when option is not at expected place" in {
     val items = List(TokenItem(ShortOption('s'), false), TokenItem(ShortOption('x'), false, Option(0)))
     intercept[InvalidOptionException] {
-      new GetOpt(Array("-s", "-x"), items).iterate(emptyCallback)
+      new GetOpt("-s -x", items).iterate(emptyCallback)
     }
   }
 

@@ -28,18 +28,20 @@ case class TokenItem(token: Token, hasValue: Boolean, expectedIndex: Option[Int]
 
 class InvalidOptionException(message: String, option: String = null) extends Exception(message)
 
-class GetOpt(args: Array[String], options: List[TokenItem]) {
+class GetOpt(args: String, options: List[TokenItem]) {
 
-  private val ShortOpPattern = """^(-)([\w])([\w]+)?""".r
+  private val ShortOpPattern = """^(-)([\w])([\w-:_]+)?""".r
 
-  private val LongOpPattern = """^(-{2})(\w[\w-]+)(=)?([\w-]+)?""".r
+  private val LongOpPattern = """^(-{2})(\w[\w-]+)(=)?([\w-:_]+)?""".r
 
-  private val ShortOpPattern2 = """^([\w])([\w]+)?""".r
+  private val ShortOpNoHyphenPattern = """^([\w])([\w-:_]+)?""".r
 
-  private val optionsMap: Map[Token, TokenItem] = options.map({case item => (item.token -> item)}).toMap
+  private val TokenPattern = """([\w-=:_]+)( )?([\w-=:_ ]*)""".r
+
+  private val OptionsMap: Map[Token, TokenItem] = options.map({case item => (item.token -> item)}).toMap
 
   private def checkIndex(token: Token, size: Int): Unit = {
-    val itemOpt = optionsMap.get(token)
+    val itemOpt = OptionsMap.get(token)
     if (itemOpt.isEmpty)
       return
 
@@ -56,41 +58,73 @@ class GetOpt(args: Array[String], options: List[TokenItem]) {
 
   }
 
-  private def validateAndSet(token: Token, value: String, longOp: Boolean = false): List[Token] = {
-    val itemOpt = optionsMap.get(token)
-    if (itemOpt.isEmpty)
-      throw new InvalidOptionException("not defined")
-
+  private def validateAndSet(token: Token, value: String, longOption: Boolean = false): List[Token] = {
     var list = List[Token](token)
-    if (itemOpt.get.hasValue) {
+    if (hasValue(token)) {
       if (null == value) {
         throw new InvalidOptionException("missing value")
       }
       token.asInstanceOf[Token].value = value
     } else if (value != null) {
-      if (longOp)
+      if (longOption)
         throw new InvalidOptionException("bad usage")
 
-      val ShortOpPattern2(first, rest) = value
+      val ShortOpNoHyphenPattern(first, rest) = value
       list ++= validateAndSet(ShortOption(first.charAt(0)), rest)
     }
 
     list
   }
 
-  private def identifyToken(token: String): List[Token] = token match {
-    case ShortOpPattern(_, key, value) => validateAndSet(ShortOption(key.charAt(0)), value)
+
+  private def parse(args: String, ignoreOptions: Boolean = false): List[Token] = {
+    val trimmedArgs = args.trim
+    if (trimmedArgs.isEmpty)
+      return List()
+
+    val TokenPattern(head, _, tail) = trimmedArgs
+    if (ignoreOptions)
+      return List(Argument(head)) ::: parse(tail, true)
+
+    if (isShortOptionWithValue(head)) {
+      if (tail.isEmpty)
+        throw new InvalidOptionException("bad usage")
+
+      val TokenPattern(value, _, rest) = tail
+      return identifyToken(head, value) ::: parse(rest)
+    } else if (head == "--") {
+      return parse(tail, true)
+    } else
+      return identifyToken(head) ::: parse(tail)
+
+  }
+
+  private def hasValue(token: Token): Boolean = {
+    val itemOpt = OptionsMap.get(token)
+    if (itemOpt.isEmpty)
+      throw new InvalidOptionException("not defined")
+
+    itemOpt.get.hasValue
+  }
+
+  private def isShortOptionWithValue(token: String): Boolean = token match {
+    case ShortOpPattern(_, key, value) => hasValue(ShortOption(key.charAt(0))) && value == null
+    case _ => false
+  }
+
+  private def identifyToken(token: String, suppliedValue: String = null): List[Token] = token match {
+    case ShortOpPattern(_, key, value) =>
+      validateAndSet(ShortOption(key.charAt(0)), if (value != null) value else suppliedValue)
     case LongOpPattern(_, key, _, value) => validateAndSet(LongOption(key), value, true)
     case _ => List(Argument(token))
   }
 
   def iterate(callback: (Token) => Unit) {
-    val tokens = args.map(identifyToken).flatten
+    val tokens = parse(args)
       .zipWithIndex.map({ case (token : Token, index) => token.index = index; token })
     tokens.foreach(token => checkIndex(token, tokens.size))
     tokens.foreach(callback)
   }
 
 }
-
 

@@ -29,7 +29,7 @@ trait GetOptBehaviours extends MockFactory { this: FlatSpec =>
       callback expects tokens(1) once
     }
 
-    new GetOpt(args.split(" "), tokens.map(t => TokenItem(t, false)).toList).iterate(callback)
+    new GetOpt(args, tokens.map(t => TokenItem(t, false)).toList).iterate(callback)
   }
 
   def valueSetter(token: Token, value: Any, args: String): Unit = {
@@ -38,7 +38,7 @@ trait GetOptBehaviours extends MockFactory { this: FlatSpec =>
       assert(token.index == 0)
     }
 
-    new GetOpt(args.split(" "), List(TokenItem(token, true))).iterate(callback)
+    new GetOpt(args, List(TokenItem(token, true))).iterate(callback)
   }
 }
 
