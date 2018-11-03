@@ -10,7 +10,7 @@ Build status on Travis CI:
 ## Dependency
 
 ```scala
-libraryDependencies += "cli4s" %% "cli4s" % "1.0.0"
+libraryDependencies += "cli4s" % "cli4s" % "1.0.0"
 ```
 
 ## Components
